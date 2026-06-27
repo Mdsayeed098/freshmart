@@ -7,6 +7,7 @@ import { ProductProvider } from './context/ProductContext';
 import Layout from './components/layout/Layout';
 import Loader from './components/ui/Loader';
 import ScrollToTop from './components/ScrollToTop';
+import ChatBot from './components/ui/ChatBot';
 
 // Route-based code splitting — reduces initial bundle size
 const Home        = lazy(() => import('./pages/Home'));
@@ -63,6 +64,7 @@ function App() {
                 </Route>
               </Routes>
             </Suspense>
+            <ChatBot />
           </CartProvider>
         </ProductProvider>
       </AuthProvider>

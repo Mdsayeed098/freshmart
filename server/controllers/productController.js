@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const Order = require('../models/Order');
 
 /**
  * @desc Get all products with filtering, search, and pagination
@@ -135,4 +136,50 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-module.exports = { getProducts, getProduct, getCategories, createProduct, updateProduct, deleteProduct };
+/**
+ * @desc Get product recommendations
+ * @route GET /api/products/:id/recommendations
+ */
+const getRecommendations = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    let recommendedIds = new Set();
+
+    // Strategy 1: Find products bought together in orders
+    try {
+      const orders = await Order.find({ 'items.product': product._id }).limit(50);
+      orders.forEach(order => {
+        order.items.forEach(item => {
+          if (item.product.toString() !== product._id.toString()) {
+            recommendedIds.add(item.product.toString());
+          }
+        });
+      });
+    } catch (e) { /* Orders might not exist yet */ }
+
+    // Strategy 2: Fill remaining with same category products
+    const categoryProducts = await Product.find({
+      category: product.category,
+      _id: { $ne: product._id },
+      isAvailable: true
+    }).limit(8);
+
+    categoryProducts.forEach(p => recommendedIds.add(p._id.toString()));
+
+    // Fetch final recommendations (max 4)
+    const recommendations = await Product.find({
+      _id: { $in: [...recommendedIds] },
+      isAvailable: true
+    }).limit(4);
+
+    res.json({ success: true, data: recommendations });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { getProducts, getProduct, getCategories, createProduct, updateProduct, deleteProduct, getRecommendations };

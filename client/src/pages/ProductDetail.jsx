@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { useCart } from '../context/CartContext';
 import Loader from '../components/ui/Loader';
 import toast from 'react-hot-toast';
+import API from '../services/api';
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { fetchProduct } = useProducts();
   const { addToCart, getItemQty, getItemId, updateQuantity } = useCart();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [recommendations, setRecommendations] = useState([]);
 
   useEffect(() => {
     const load = async () => {
@@ -18,6 +21,11 @@ const ProductDetail = () => {
       const d = await fetchProduct(id);
       setProduct(d);
       setLoading(false);
+      // Fetch recommendations
+      try {
+        const { data } = await API.get(`/products/${id}/recommendations`);
+        if (data.success) setRecommendations(data.data);
+      } catch { /* silent */ }
     };
     load();
   }, [id]);
@@ -128,6 +136,36 @@ const ProductDetail = () => {
             </div>
           </div>
         </div>
+
+        {/* Recommendations */}
+        {recommendations.length > 0 && (
+          <div style={{ padding: '32px 0 8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px' }}>
+              <span style={{ fontSize: '20px' }}>✨</span>
+              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#111827', letterSpacing: '-0.3px' }}>You Might Also Like</h2>
+              <span style={{ fontSize: '11px', background: '#DCFCE7', color: '#16A34A', padding: '2px 8px', borderRadius: '20px', fontWeight: 700 }}>AI Powered</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '14px' }}>
+              {recommendations.map(rec => (
+                <div
+                  key={rec._id}
+                  onClick={() => navigate(`/products/${rec._id}`)}
+                  style={{ background: '#fff', border: '1px solid #EBEBEB', borderRadius: '12px', padding: '14px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 6px 20px rgba(34,197,94,0.15)'; e.currentTarget.style.borderColor = '#22C55E'; }}
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor = '#EBEBEB'; }}
+                >
+                  <div style={{ background: '#F9FAFB', borderRadius: '8px', aspectRatio: '1/1', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px', overflow: 'hidden' }}>
+                    <img src={rec.image} alt={rec.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }}
+                      onError={e => { e.target.src = 'https://placehold.co/160x160/F8F9FA/9CA3AF?text=FM'; }} />
+                  </div>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#111827', marginBottom: '4px', lineHeight: 1.3 }}>{rec.name}</div>
+                  <div style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '6px' }}>{rec.category}</div>
+                  <div style={{ fontSize: '14px', fontWeight: 900, color: '#22C55E' }}>${rec.price.toFixed(2)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       <style>{`
         @media (max-width: 640px) { .pd-layout { grid-template-columns: 1fr !important; } }
