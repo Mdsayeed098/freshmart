@@ -1,4 +1,4 @@
-# FreshMart — Premium Grocery E-Commerce 🛒
+# FreshMart — Premium Grocery E-Commerce for ePBL Internship🛒
 
 [![Project Status: Active](https://img.shields.io/badge/Project%20Status-Active-success.svg)](https://github.com/Mdsayeed098/freshmart)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
